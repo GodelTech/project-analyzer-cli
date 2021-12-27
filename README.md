@@ -12,7 +12,7 @@ A tool for gathering information from package.json files of projects.
 
 - In the project directory, open the console
 
-- Run `npx project-analyzer-cli@latests`
+- Run `npx project-analyzer-cli@latest`
 
 ## Related links
 - [Ticket](https://trello.com/c/hjYwMOrq/232-create-poc-approach-of-packagejsons-analysis)
