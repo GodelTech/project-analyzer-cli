@@ -1,0 +1,13 @@
+{
+  "name": "project-analyzer-cli",
+  "version": "0.0.1",
+  "main": "index.js",
+  "dependencies": {
+    "filehound": "^1.17.5",
+    "inquirer": "^8.2.0",
+    "parse-gitignore": "^1.0.1"
+  },
+  "bin": {
+    "project-analyzer-cli": "./index.js"
+  }
+}
