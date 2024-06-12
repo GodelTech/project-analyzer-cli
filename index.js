@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
-const http = require('http');
 const inquirer = require('inquirer');
 const fileHound = require('filehound');
 const parseGitIgnore = require('parse-gitignore');
@@ -9,7 +8,14 @@ const parseGitIgnore = require('parse-gitignore');
 
 (async () => {
 
-  const projectPath = process.cwd();
+  const projectPath = (await inquirer
+    .prompt([
+      {
+        type: 'input',
+        name: 'projectPath',
+        message: `Enter a project path (leave empty to use ${process.cwd()}):`,
+      },
+    ])).projectPath || process.cwd();
 
   const projectName = (await inquirer
     .prompt([
@@ -54,12 +60,14 @@ const parseGitIgnore = require('parse-gitignore');
     ignored.ignoredFolders = ignored.manualEnteredIgnoredFolders;
   }
 
-  const ignoredFoldersRegExp = ignored.ignoredFolders.split(',').map(d => new RegExp(d.trim()));
+  const ignoredFoldersRegExp = ignored.ignoredFolders
+    .split(',')
+    .map(d => new RegExp(d.trim()));
 
   console.log('! Processing, please wait...');
 
   const packages = fileHound.create()
-    .paths(projectPath)
+    .paths(path.resolve(projectPath))
     .discard(ignoredFoldersRegExp)
     .match('package.json')
     .findSync();
@@ -69,61 +77,70 @@ const parseGitIgnore = require('parse-gitignore');
       {
         type: 'checkbox',
         name: 'selectedPackages',
-        message: 'Select one or more package.json to analyze:',
+        message: 'Select one or more package.json to analyze (use space to select):',
         choices: packages,
       },
     ])).selectedPackages;
 
-  const results = {
-    projectName,
-    subProjects: [],
-  };
+  const results = [];
 
   for (const packagePath of selectedPackages) {
-    const data = require(packagePath);
+    console.log(`Collecting packages information for ${packagePath}...`);
 
-    results.subProjects.push({
-      name: data.name ?? 'unknown',
-      version: data.version ?? 'unknown',
-      dependencies: data.dependencies ?? [],
-      devDependencies: data.devDependencies ?? [],
-    });
+    const package = JSON.parse(fs.readFileSync(packagePath));
+
+    const result = {
+      name: package.name ?? projectName,
+      version: package.version ?? 'unknown',
+      dependencies: {},
+    }
+
+    const packageFolder = path.dirname(packagePath);
+
+    const subPackages = fileHound.create()
+      .paths(`${packageFolder}/node_modules`)
+      .match('package.json')
+      .findSync();
+
+    for(const subPackagePath of subPackages) {
+      const subPackage = JSON.parse(fs.readFileSync(subPackagePath));
+
+      if (subPackage.name) {
+        result.dependencies[subPackage.name] = new Set(result.dependencies[subPackage.name]);
+        result.dependencies[subPackage.name].add(subPackage.version ?? 'unknown');
+        result.dependencies[subPackage.name] = Array.from(result.dependencies[subPackage.name]);
+      }
+    }
+
+    results.push(result);
   }
+
+  const report = JSON.stringify(results, null, 2);
 
   const isConfirmed = (await inquirer
     .prompt([
       {
         type: 'confirm',
         name: 'isConfirmed',
-        message: `Confirm that you agree to send this data: \n${JSON.stringify(results, null, 2)}`,
+        message: `Confirm that you agree to save this data: \n${report}`,
       },
     ])).isConfirmed;
 
   if (isConfirmed) {
     const data = new TextEncoder()
-      .encode(JSON.stringify(results));
+      .encode(report);
+    const date = new Date().toLocaleDateString('en-GB', {
+      day: '2-digit',
+      year: 'numeric',
+      month: 'short',
+    }).split(' ').join('-');
 
-    const options = {
-      hostname: 'localhost',
-      port: 3004,
-      path: '/projects',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': data.length,
-      }
-    };
+    fs.writeFileSync(__dirname + `/reports/${projectName}-${date}.json`, data);
 
-    const req = http.request(options, res => {
-      console.log(`! Results sent out, status code: ${res.statusCode}`);
-    });
+    process.exit(0);
+  } else {
+    console.warn('Analysis has been cancelled!');
 
-    req.on('error', error => { console.error(error); });
-
-    req.write(data);
-    req.end();
-  }
-  else {
-    console.warn('! Analysis cancelled.');
+    process.exit(-1);
   }
 })();
