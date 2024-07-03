@@ -5,6 +5,16 @@ const inquirer = require('inquirer');
 const fileHound = require('filehound');
 const parseGitIgnore = require('parse-gitignore');
 
+const excludeGivenDeps = (report, depsList) => {
+  return {
+    ...report,
+    dependencies: depsList.reduce((acc, depName) => {
+      acc[depName] = report.dependencies[depName];
+
+      return acc;
+    }, {})
+  }
+}
 
 (async () => {
 
@@ -28,10 +38,10 @@ const parseGitIgnore = require('parse-gitignore');
 
   let gitIgnoredFolderPaths = null;
   try {
-    gitIgnoredFolderPaths = parseGitIgnore(fs.readFileSync(path.join(projectPath, '.gitignore')))
-      .filter(d => d.startsWith('/'))
-      .map(d => d.split('/')[1])
-      .join(', ');
+    gitIgnoredFolderPaths = parseGitIgnore(fs.readFileSync(path.resolve(projectPath, '.gitignore')))
+      .join(', ')
+      .replace(/([*.])/g, '\\$1');
+      console.log(gitIgnoredFolderPaths)
 
   } catch (e) {
     console.warn('! ".gitignore" file was not detected, please enter ignored folders manually.');
@@ -77,45 +87,47 @@ const parseGitIgnore = require('parse-gitignore');
       {
         type: 'checkbox',
         name: 'selectedPackages',
-        message: 'Select one or more package.json to analyze (use space to select):',
+        message: 'Select one or more package.json to analyze:',
         choices: packages,
       },
     ])).selectedPackages;
 
-  const results = [];
+  const result = {
+    name: projectName,
+    dependencies: {},
+  };
 
   for (const packagePath of selectedPackages) {
     console.log(`Collecting packages information for ${packagePath}...`);
 
     const package = JSON.parse(fs.readFileSync(packagePath));
 
-    const result = {
-      name: package.name ?? projectName,
-      version: package.version ?? 'unknown',
-      dependencies: {},
+    for (dependencyName of Object.keys(package?.dependencies ?? {})) {
+      result.dependencies[dependencyName] = new Set(result.dependencies[dependencyName]);
+      result.dependencies[dependencyName].add(package.dependencies[dependencyName] ?? 'unknown');
+      result.dependencies[dependencyName] = Array.from(result.dependencies[dependencyName]);
     }
 
-    const packageFolder = path.dirname(packagePath);
-
-    const subPackages = fileHound.create()
-      .paths(`${packageFolder}/node_modules`)
-      .match('package.json')
-      .findSync();
-
-    for(const subPackagePath of subPackages) {
-      const subPackage = JSON.parse(fs.readFileSync(subPackagePath));
-
-      if (subPackage.name) {
-        result.dependencies[subPackage.name] = new Set(result.dependencies[subPackage.name]);
-        result.dependencies[subPackage.name].add(subPackage.version ?? 'unknown');
-        result.dependencies[subPackage.name] = Array.from(result.dependencies[subPackage.name]);
-      }
+    for (dependencyName of Object.keys(package?.devDependencies ?? {})) {
+      result.dependencies[dependencyName] = new Set(result.dependencies[dependencyName]);
+      result.dependencies[dependencyName].add(package.devDependencies[dependencyName] ?? 'unknown');
+      result.dependencies[dependencyName] = Array.from(result.dependencies[dependencyName]);
     }
-
-    results.push(result);
   }
 
-  const report = JSON.stringify(results, null, 2);
+  const chosenForReport = (await inquirer
+    .prompt([
+      {
+        type: 'checkbox',
+        name: 'selected',
+        message: 'Select dependencies being included into the report (select nothing to include them all):',
+        choices: Object.keys(result.dependencies),
+      },
+    ])).selected;
+
+  const report = !chosenForReport?.length
+    ? JSON.stringify(result, null, 2)
+    : JSON.stringify(excludeGivenDeps(result, chosenForReport), null, 2);
 
   const isConfirmed = (await inquirer
     .prompt([
@@ -135,7 +147,12 @@ const parseGitIgnore = require('parse-gitignore');
       month: 'short',
     }).split(' ').join('-');
 
-    fs.writeFileSync(__dirname + `/reports/${projectName}-${date}.json`, data);
+    const projectNameToFileName = projectName
+      ?.split(' ')
+      .join('-')
+      .toLowerCase() || 'report';
+
+    fs.writeFileSync(__dirname + `/reports/${projectNameToFileName}-${date}.json`, data);
 
     process.exit(0);
   } else {
