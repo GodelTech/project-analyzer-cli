@@ -5,11 +5,13 @@ const inquirer = require('inquirer');
 const fileHound = require('filehound');
 const parseGitIgnore = require('parse-gitignore');
 
-const excludeGivenDeps = (report, depsList) => {
+const excludeGivenDeps = (report, depsListToExclude = []) => {
   return {
     ...report,
-    dependencies: depsList.reduce((acc, depName) => {
-      acc[depName] = report.dependencies[depName];
+    dependencies: Object.keys(report.dependencies).reduce((acc, depName) => {
+      if (!depsListToExclude.includes(depName)) {
+        acc[depName] = report.dependencies[depName];
+      }
 
       return acc;
     }, {})
@@ -115,19 +117,19 @@ const excludeGivenDeps = (report, depsList) => {
     }
   }
 
-  const chosenForReport = (await inquirer
+  const chosenToBeExcluded = (await inquirer
     .prompt([
       {
         type: 'checkbox',
         name: 'selected',
-        message: 'Select dependencies being included into the report (select nothing to include them all):',
+        message: 'Select dependencies being excluded from the report (select nothing to include them all):',
         choices: Object.keys(result.dependencies),
       },
     ])).selected;
 
-  const report = !chosenForReport?.length
+  const report = !chosenToBeExcluded?.length
     ? JSON.stringify(result, null, 2)
-    : JSON.stringify(excludeGivenDeps(result, chosenForReport), null, 2);
+    : JSON.stringify(excludeGivenDeps(result, chosenToBeExcluded), null, 2);
 
   const isConfirmed = (await inquirer
     .prompt([
