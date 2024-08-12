@@ -1,0 +1,144 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+- main
+
+variables:
+  artifactDirectory: lib
+  builtLibLocation: dist/godeltech/project-analyzer-cli/src # until built is in src
+  demoTestResultLocation: junit/demo
+  libCoverageLocation: coverage
+  libLocation: projects/godeltech/project-analyzer-cli
+  libSrcLocation: projects/godeltech/project-analyzer-cli/src
+  libTestResultLocation: junit/lib
+  packageName: '@godeltech/project-analyzer-cli'
+  sonarCloudOrganizationName: godeltech
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: Build
+  displayName: 'Build'
+  variables:
+    versionSuffix: ''
+    currentPackageVersion: ''
+  jobs:
+    - job: Lib
+      displayName: 'Build and test lib'
+      steps:
+
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '10.x'
+          displayName: 'Install Node.js'
+        - script:
+            npm install # npm run build to be added
+          displayName: 'npm install'
+
+        - task: Bash@3
+          inputs:
+            script: npm run lint
+            failOnStderr: true
+          displayName: 'Linting'
+
+        - task: Bash@3
+          inputs:
+            script: npm run test
+            failOnStderr: true
+          displayName: 'Unit tests'
+
+        - task: Bash@3
+          displayName: 'Set version suffix'
+          condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "##vso[task.setvariable variable=versionSuffix]-ci-$BUILD_BUILDNUMBER"
+        - task: PowerShell@2
+          displayName: 'Get current version'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/$(libLocation)'
+            script: |
+              npm version | ConvertFrom-Json | Select-Object -ExpandProperty $(packageName) | Set-Variable -Name packageVersion
+              Write-Host "##vso[task.setvariable variable=currentPackageVersion;]$packageVersion"
+
+        - task: PowerShell@2
+          displayName: 'Update version'
+          condition: ne(variables['Build.SourceBranch'], 'refs/heads/master')
+          inputs:
+            targetType: 'inline'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/$(libLocation)'
+            script: |
+              npm --no-git-tag-version version $(currentPackageVersion)$(versionSuffix)
+
+        # sonar to be added
+
+        # Build step to be added yet
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Pipeline Artifac in $(artifactDirectory) directory'
+          inputs:
+            path: '$(System.DefaultWorkingDirectory)/$(builtLibLocation)'
+            artifact: '$(artifactDirectory)'
+
+        - task: PublishCodeCoverageResults@1
+          displayName: 'Publish code coverage result'
+          condition: succeededOrFailed()
+          inputs:
+            codeCoverageTool: Cobertura
+            summaryFileLocation: '$(libCoverageLocation)/cobertura-coverage.xml'
+            failIfCoverageEmpty: true
+
+        - task: PublishTestResults@2
+          displayName: 'Publish test result'
+          condition: succeededOrFailed()
+          inputs:
+            searchFolder: $(System.DefaultWorkingDirectory)/$(libTestResultLocation)
+            testRunTitle: lib
+            testResultsFormat: JUnit
+            testResultsFiles: "**/TESTS*.xml"
+
+- stage: Artifacts
+  displayName: 'Artifacts'
+  dependsOn: Build
+  jobs:
+    - deployment: Publish
+      displayName: 'Publish lib in artifacts'
+      environment: 'Artifacts'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+
+            - task: Npm@1
+              displayName: 'Publish lib in artifacts'
+              inputs:
+                command: 'publish'
+                workingDir: '$(Pipeline.Workspace)/$(artifactDirectory)'
+                publishRegistry: 'useFeed'
+                publishFeed: '19324bbd-9baf-4407-b86d-3e7f0d145399/0df141cc-6c8d-4e42-a363-89cd9c930d8e'
+
+- stage: Npm
+  displayName: 'Npm'
+  dependsOn: Artifacts
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  jobs:
+    - deployment: Publish
+      displayName: 'Publish lib in npm registry'
+      environment: 'npm'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+
+            - task: Npm@1
+              displayName: 'Publish lib in npm registry'
+              inputs:
+                command: 'publish'
+                workingDir: '$(Pipeline.Workspace)/$(artifactDirectory)'
+                publishEndpoint: 'npm'
