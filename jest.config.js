@@ -2,7 +2,7 @@ module.exports = {
   coveragePathIgnorePatterns: ['/node_modules', '/coverage', 'index.js'],
   testEnvironment: 'node',
   watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
-  coverageReporters: ['text', 'lcov'],
+  coverageReporters: ['text', 'lcov', 'cobertura'],
   coverageDirectory: 'coverage/',
   collectCoverageFrom: ['src/**/*.js'],
   coverageThreshold: {

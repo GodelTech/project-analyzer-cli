@@ -6,6 +6,8 @@
 /out-tsc
 /reports/**
 !/reports/.gitkeep
+junit.xml
+
 # Only exists if Bazel was run
 /bazel-out
 

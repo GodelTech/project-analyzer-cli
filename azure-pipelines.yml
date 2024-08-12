@@ -7,15 +7,12 @@ trigger:
 - main
 
 variables:
-  artifactDirectory: lib
-  builtLibLocation: dist/godeltech/project-analyzer-cli/src # until built is in src
-  demoTestResultLocation: junit/demo
-  libCoverageLocation: coverage
-  libLocation: projects/godeltech/project-analyzer-cli
-  libSrcLocation: projects/godeltech/project-analyzer-cli/src
-  libTestResultLocation: junit/lib
-  packageName: '@godeltech/project-analyzer-cli'
-  sonarCloudOrganizationName: godeltech
+  ARTIFACT_DIRECTORY: lib
+  BUILT_LIB_LOCATION: dist/godeltech/project-analyzer-cli # until built is in src
+  COVERAGE_LOCATION: coverage
+  LIB_LOCATION: projects/godeltech/project-analyzer-cli
+  LIB_SRC_LOCATION: projects/godeltech/project-analyzer-cli/src
+  PACKAGE_NAME: '@godeltech/project-analyzer-cli'
 
 pool:
   vmImage: ubuntu-latest
@@ -33,75 +30,81 @@ stages:
 
         - task: NodeTool@0
           inputs:
-            versionSpec: '10.x'
+            versionSpec: '18.x'
           displayName: 'Install Node.js'
         - script:
             npm install # npm run build to be added
           displayName: 'npm install'
 
-        - task: Bash@3
-          inputs:
-            script: npm run lint
-            failOnStderr: true
+        - task: Npm@1
           displayName: 'Linting'
-
-        - task: Bash@3
           inputs:
-            script: npm run test
-            failOnStderr: true
+            command: 'custom'
+            customCommand: 'run lint'
+
+        - task: Npm@1
           displayName: 'Unit tests'
+          inputs:
+            command: 'custom'
+            customCommand: 'run test:ci'
+
+        - task: Npm@1
+          displayName: 'Security audit'
+          inputs:
+            command: 'custom'
+            customCommand: 'audit'
 
         - task: Bash@3
           displayName: 'Set version suffix'
-          condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+          condition: false # ne(variables['Build.SourceBranch'], 'refs/heads/main')
           inputs:
             targetType: 'inline'
             script: |
               echo "##vso[task.setvariable variable=versionSuffix]-ci-$BUILD_BUILDNUMBER"
+
         - task: PowerShell@2
           displayName: 'Get current version'
+          condition: false # @TODO: remove
           inputs:
             targetType: 'inline'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/$(libLocation)'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/$(LIB_LOCATION)'
             script: |
-              npm version | ConvertFrom-Json | Select-Object -ExpandProperty $(packageName) | Set-Variable -Name packageVersion
+              npm version | ConvertFrom-Json | Select-Object -ExpandProperty $(PACKAGE_NAME) | Set-Variable -Name packageVersion
               Write-Host "##vso[task.setvariable variable=currentPackageVersion;]$packageVersion"
 
         - task: PowerShell@2
           displayName: 'Update version'
-          condition: ne(variables['Build.SourceBranch'], 'refs/heads/master')
+          condition: false # ne(variables['Build.SourceBranch'], 'refs/heads/master')
           inputs:
             targetType: 'inline'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/$(libLocation)'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/$(LIB_LOCATION)'
             script: |
               npm --no-git-tag-version version $(currentPackageVersion)$(versionSuffix)
 
-        # sonar to be added
+        # Sonar to be added
 
         # Build step to be added yet
 
         - task: PublishPipelineArtifact@1
-          displayName: 'Publish Pipeline Artifac in $(artifactDirectory) directory'
+          displayName: 'Publish Pipeline Artifac in $(ARTIFACT_DIRECTORY) directory'
+          condition: false # @TODO: remove
           inputs:
-            path: '$(System.DefaultWorkingDirectory)/$(builtLibLocation)'
-            artifact: '$(artifactDirectory)'
+            path: '$(System.DefaultWorkingDirectory)/$(BUILT_LIB_LOCATION)'
+            artifact: '$(ARTIFACT_DIRECTORY)'
 
-        - task: PublishCodeCoverageResults@1
+        - task: PublishCodeCoverageResults@2
           displayName: 'Publish code coverage result'
           condition: succeededOrFailed()
           inputs:
-            codeCoverageTool: Cobertura
-            summaryFileLocation: '$(libCoverageLocation)/cobertura-coverage.xml'
+            summaryFileLocation: '$(COVERAGE_LOCATION)/cobertura-coverage.xml'
             failIfCoverageEmpty: true
 
         - task: PublishTestResults@2
           displayName: 'Publish test result'
           condition: succeededOrFailed()
           inputs:
-            searchFolder: $(System.DefaultWorkingDirectory)/$(libTestResultLocation)
-            testRunTitle: lib
             testResultsFormat: JUnit
-            testResultsFiles: "**/TESTS*.xml"
+            testResultsFiles: "**/junit.xml"
 
 - stage: Artifacts
   displayName: 'Artifacts'
@@ -119,7 +122,7 @@ stages:
               displayName: 'Publish lib in artifacts'
               inputs:
                 command: 'publish'
-                workingDir: '$(Pipeline.Workspace)/$(artifactDirectory)'
+                workingDir: '$(Pipeline.Workspace)/$(ARTIFACT_DIRECTORY)'
                 publishRegistry: 'useFeed'
                 publishFeed: '19324bbd-9baf-4407-b86d-3e7f0d145399/0df141cc-6c8d-4e42-a363-89cd9c930d8e'
 
@@ -140,5 +143,5 @@ stages:
               displayName: 'Publish lib in npm registry'
               inputs:
                 command: 'publish'
-                workingDir: '$(Pipeline.Workspace)/$(artifactDirectory)'
+                workingDir: '$(Pipeline.Workspace)/$(ARTIFACT_DIRECTORY)'
                 publishEndpoint: 'npm'
