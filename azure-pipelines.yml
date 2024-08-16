@@ -8,12 +8,8 @@ trigger:
 
 variables:
   ARTIFACT_DIRECTORY: lib
-  # BUILT_LIB_LOCATION: dist/godeltech/project-analyzer-cli/lib @TODO: remove
   COVERAGE_LOCATION: coverage
-  # PROJECT_LOCATION: projects/godeltech/project-analyzer-cli
-  # LIB_SRC_LOCATION: projects/godeltech/project-analyzer-cli/src @TODO: remove
   PACKAGE_NAME: '@godeltech/project-analyzer-cli'
-  # SHORT_PACKAGE_NAME: 'project-analyzer-cli' @TODO: remove
 
 pool:
   vmImage: ubuntu-latest
@@ -33,8 +29,8 @@ stages:
             versionSpec: '18.x'
           displayName: 'Install Node.js'
         - script:
-            npm install # npm run build to be added
-          displayName: 'npm install'
+            npm ci
+          displayName: 'npm ci'
 
         - task: Npm@1
           displayName: 'Linting'
@@ -53,14 +49,6 @@ stages:
           inputs:
             command: 'custom'
             customCommand: 'audit'
-
-        # - task: Bash@3 @TODO: remove
-        #   displayName: 'Set version suffix'
-        #   condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: |
-        #       echo "##vso[task.setvariable variable=versionSuffix]-ci-$BUILD_BUILDNUMBER"
 
         - task: Bash@3
           displayName: Set NPM package patch number
@@ -97,24 +85,6 @@ stages:
                 sed -i 's/"version": "'${PACKAGE_VERSION}'"/"version": "'${NEW_VERSION}'"/' package.json
                 echo New package.json version: $(jq -r ".version" package.json)
               fi
-
-        # - task: PowerShell@2 @TODO: remove
-        #   displayName: 'Get current version'
-        #   inputs:
-        #     targetType: 'inline'
-        #     workingDirectory: '$(System.DefaultWorkingDirectory)/$(LIB_LOCATION)'
-        #     script: |
-        #       npm version | ConvertFrom-Json | Select-Object -ExpandProperty $(PACKAGE_NAME) | Set-Variable -Name packageVersion
-        #       Write-Host "##vso[task.setvariable variable=currentPackageVersion;]$packageVersion"
-
-        # - task: PowerShell@2 @TODO: remove
-        #   displayName: 'Update version'
-        #   condition: ne(variables['Build.SourceBranch'], 'refs/heads/master')
-        #   inputs:
-        #     targetType: 'inline'
-        #     workingDirectory: '$(System.DefaultWorkingDirectory)/$(LIB_LOCATION)'
-        #     script: |
-        #       npm --no-git-tag-version version $(currentPackageVersion)$(versionSuffix)
 
         - task: Npm@1
           displayName: 'Build'
