@@ -33,7 +33,7 @@
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "build": "webpack --mode=production",
+    "build": "webpack --mode=production && cp package.json lib",
     "lint": "eslint src",
     "test": "jest --config=./jest.config.cjs --coverage",
     "test:ci": "jest --ci --reporters=jest-junit --reporters=default --coverage --coverageReporters=cobertura --coverageReporters=html",
