@@ -1,5 +1,5 @@
 {
-  "name": "project-analyzer-cli",
+  "name": "@godeltech/project-analyzer-cli",
   "version": "0.0.1",
   "main": "lib/index.cjs",
   "type": "module",

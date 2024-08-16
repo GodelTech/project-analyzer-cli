@@ -8,11 +8,12 @@ trigger:
 
 variables:
   ARTIFACT_DIRECTORY: lib
-  BUILT_LIB_LOCATION: dist/godeltech/project-analyzer-cli/lib
+  # BUILT_LIB_LOCATION: dist/godeltech/project-analyzer-cli/lib @TODO: remove
   COVERAGE_LOCATION: coverage
   LIB_LOCATION: projects/godeltech/project-analyzer-cli
   LIB_SRC_LOCATION: projects/godeltech/project-analyzer-cli/src
   PACKAGE_NAME: '@godeltech/project-analyzer-cli'
+  # SHORT_PACKAGE_NAME: 'project-analyzer-cli' @TODO: remove
 
 pool:
   vmImage: ubuntu-latest
@@ -53,31 +54,67 @@ stages:
             command: 'custom'
             customCommand: 'audit'
 
+        # - task: Bash@3 @TODO: remove
+        #   displayName: 'Set version suffix'
+        #   condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+        #   inputs:
+        #     targetType: 'inline'
+        #     script: |
+        #       echo "##vso[task.setvariable variable=versionSuffix]-ci-$BUILD_BUILDNUMBER"
+
         - task: Bash@3
-          displayName: 'Set version suffix'
-          condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+          displayName: Set NPM package patch number
+          env:
+            COMPANY_NAME: 'godeltech'
+            FEED_NAME: 'project-analyzer-cli'
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
           inputs:
             targetType: 'inline'
             script: |
-              echo "##vso[task.setvariable variable=versionSuffix]-ci-$BUILD_BUILDNUMBER"
+              # Get package name and version from package.json file
+              PACKAGE_VERSION=$(jq -r ".version" package.json)
+              GET_PACKAGE_ID_URL="https://feeds.dev.azure.com/${COMPANY_NAME}/_apis/packaging/Feeds/${FEED_NAME}/packages?protocolType=Npm&packageNameQuery=$PACKAGE_NAME"
+              # Get all available versions for our package
+              ALL_VERSIONS_URL=$(curl -s -X GET -u PATUSER:$SYSTEM_ACCESSTOKEN $GET_PACKAGE_ID_URL | jq -r '.value[0]._links.versions.href')
+              ALL_VERSIONS=$(curl -s -X GET -u PATUSER:$SYSTEM_ACCESSTOKEN $ALL_VERSIONS_URL | jq -r '.value[].version')
+              all=($ALL_VERSIONS)
 
-        - task: PowerShell@2
-          displayName: 'Get current version'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/$(LIB_LOCATION)'
-            script: |
-              npm version | ConvertFrom-Json | Select-Object -ExpandProperty $(PACKAGE_NAME) | Set-Variable -Name packageVersion
-              Write-Host "##vso[task.setvariable variable=currentPackageVersion;]$packageVersion"
+              # If finds existing version, will increase patch version
+              if [[ " ${all[@]} " =~ " ${PACKAGE_VERSION} " ]]; then
+                echo Current package version found in existing packages. Iterating the patch number...
+                # Get latest version currently published in the feed for our package
+                LATEST_VERSION=$(curl -s -X GET -u PATUSER:$SYSTEM_ACCESSTOKEN $GET_PACKAGE_ID_URL| jq -r '.value[].versions[].version')
+                IFS=. read MAJOR MINOR PATCH <<< "$LATEST_VERSION"
+                PATCH_UPDATED=$((PATCH + 1))
+                NEW_VERSION=$MAJOR.$MINOR.$PATCH_UPDATED
+                NEW_BUILD_NUMBER=$MAJOR.$MINOR.$PATCH_UPDATED
+                echo New package version: $NEW_VERSION
+                # Update patch number variable
+                echo "##vso[task.setvariable variable=patch;]$PATCH_UPDATED"
+                # Update build number of the current build
+                echo "##vso[build.updatebuildnumber]$NEW_BUILD_NUMBER"
+                echo Replacing \"version\": \"$PACKAGE_VERSION\" with \"version\": \"$NEW_VERSION\" in local package.json
+                sed -i 's/"version": "'${PACKAGE_VERSION}'"/"version": "'${NEW_VERSION}'"/' package.json
+                echo New package.json version: $(jq -r ".version" package.json)
+              fi
 
-        - task: PowerShell@2
-          displayName: 'Update version'
-          condition: ne(variables['Build.SourceBranch'], 'refs/heads/master')
-          inputs:
-            targetType: 'inline'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/$(LIB_LOCATION)'
-            script: |
-              npm --no-git-tag-version version $(currentPackageVersion)$(versionSuffix)
+        # - task: PowerShell@2 @TODO: remove
+        #   displayName: 'Get current version'
+        #   inputs:
+        #     targetType: 'inline'
+        #     workingDirectory: '$(System.DefaultWorkingDirectory)/$(LIB_LOCATION)'
+        #     script: |
+        #       npm version | ConvertFrom-Json | Select-Object -ExpandProperty $(PACKAGE_NAME) | Set-Variable -Name packageVersion
+        #       Write-Host "##vso[task.setvariable variable=currentPackageVersion;]$packageVersion"
+
+        # - task: PowerShell@2 @TODO: remove
+        #   displayName: 'Update version'
+        #   condition: ne(variables['Build.SourceBranch'], 'refs/heads/master')
+        #   inputs:
+        #     targetType: 'inline'
+        #     workingDirectory: '$(System.DefaultWorkingDirectory)/$(LIB_LOCATION)'
+        #     script: |
+        #       npm --no-git-tag-version version $(currentPackageVersion)$(versionSuffix)
 
         - task: Npm@1
           displayName: 'Build'
@@ -86,9 +123,9 @@ stages:
             customCommand: 'run build'
 
         - task: PublishPipelineArtifact@1
-          displayName: 'Publish Pipeline Artifac in $(ARTIFACT_DIRECTORY) directory'
+          displayName: 'Publish Pipeline Artifact in $(ARTIFACT_DIRECTORY) directory'
           inputs:
-            path: '$(System.DefaultWorkingDirectory)/$(BUILT_LIB_LOCATION)'
+            targetPath: '$(Pipeline.Workspace)/$(ARTIFACT_DIRECTORY)'
             artifact: '$(ARTIFACT_DIRECTORY)'
 
         - task: PublishCodeCoverageResults@2
@@ -122,12 +159,12 @@ stages:
                   command: 'publish'
                   workingDir: '$(Pipeline.Workspace)/$(ARTIFACT_DIRECTORY)'
                   publishRegistry: 'useFeed'
-                  publishFeed: '19324bbd-9baf-4407-b86d-3e7f0d145399/19b42d8e-fc7a-4ddc-bbb6-f4a97000f284'
+                  publishFeed: '19b42d8e-fc7a-4ddc-bbb6-f4a97000f284'
 
 - stage: Npm
   displayName: 'Npm'
   dependsOn: Artifacts
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   jobs:
     - deployment: Publish
       displayName: 'Publish lib in npm registry'
