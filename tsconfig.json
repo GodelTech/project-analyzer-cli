@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "types": [
+      "@types/node",
+      "@types/jest",
+      "@types/inquirer",
+      "@types/parse-gitignore",
+      "@types/eslint__js"
+    ],
+    "moduleResolution": "Bundler",
+    "module": "ES2020",
+    "target": "ES5",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "outDir": "./lib/"
+  },
+  "exclude": ["node_modules"],
+  "include": [
+    "**/*.ts",
+    "**/*.mjs",
+    "**/*.cjs",
+  ]
+}

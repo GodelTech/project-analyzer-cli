@@ -1,7 +1,7 @@
-const gatherDepandencies = require('./gatherDepandencies');
+import gatherDepandencies from './gatherDepandencies';
 
 describe('gatherDependencies', () => {
-  let globalConsoleLog;
+  let globalConsoleLog: (...args: string[]) => void;
 
   beforeAll(() => {
     globalConsoleLog = console.log;

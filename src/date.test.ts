@@ -1,4 +1,4 @@
-const { getFormattedDate } = require('./date');
+import { getFormattedDate } from './date';
 
 describe('Date functions', () => {
   describe('getFormattedDate', () => {

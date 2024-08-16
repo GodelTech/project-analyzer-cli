@@ -1,4 +1,4 @@
-const excludeDependencies = require('./excludeDependencies');
+import excludeDependencies from './excludeDependencies';
 
 const mockReport = {
   name: 'test',

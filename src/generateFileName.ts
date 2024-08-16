@@ -1,6 +1,6 @@
-const { getFormattedDate } = require('./date');
+import { getFormattedDate } from './date';
 
-module.exports = (projectName) => {
+export default (projectName?: string): string => {
   const date = getFormattedDate();
 
   const projectNameToFileName =

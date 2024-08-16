@@ -8,4 +8,4 @@ const getFormattedDate = () =>
     .split(' ')
     .join('-');
 
-module.exports = { getFormattedDate };
+export { getFormattedDate };

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-const fs = require('fs');
-const path = require('path');
-const inquirer = require('inquirer');
-const fileHound = require('filehound');
-const parseGitIgnore = require('parse-gitignore');
+import * as fs from 'fs';
+import * as path from 'path';
+import inquirer from 'inquirer';
+import * as fileHound from 'filehound';
+import * as parseGitIgnore from 'parse-gitignore';
 
-const excludeGivenDeps = require('./excludeDependencies');
-const gatherDepandencies = require('./gatherDepandencies');
-const generateFileName = require('./generateFileName');
+import excludeGivenDeps from './excludeDependencies';
+import gatherDepandencies from './gatherDepandencies';
+import generateFileName from './generateFileName';
 
 (async () => {
   const projectPath =
@@ -74,7 +74,7 @@ const generateFileName = require('./generateFileName');
 
   const ignoredFoldersRegExp = ignored.ignoredFolders
     .split(',')
-    .map((d) => new RegExp(d.trim()));
+    .map((d: string) => new RegExp(d.trim()));
 
   console.log('! Processing, please wait...');
 

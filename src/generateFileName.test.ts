@@ -1,4 +1,4 @@
-const generateFileName = require('./generateFileName');
+import generateFileName from './generateFileName';
 
 describe('generateFileName', () => {
   it('should return filename in correct format', () => {
