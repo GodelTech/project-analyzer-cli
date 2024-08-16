@@ -8,7 +8,6 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(js.configs.recommended, {
   files: ['**/*.ts', '**/*.mjs', '**/*.cjs'],
-  ignores: ['lib'],
   languageOptions: {
     globals: {
       ...globals.browser,

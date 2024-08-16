@@ -34,7 +34,7 @@
   },
   "scripts": {
     "build": "webpack --mode=production",
-    "lint": "eslint",
+    "lint": "eslint src",
     "test": "jest --config=./jest.config.cjs --coverage",
     "test:ci": "jest --ci --reporters=jest-junit --reporters=default --coverage --coverageReporters=cobertura --coverageReporters=html",
     "start": "node lib/index.cjs"

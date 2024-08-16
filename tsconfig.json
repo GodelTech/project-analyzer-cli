@@ -12,11 +12,9 @@
     "target": "ES5",
     "noImplicitAny": true,
     "removeComments": true,
-    "preserveConstEnums": true,
-    "sourceMap": true,
-    "outDir": "./lib/"
+    "preserveConstEnums": true
   },
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "lib"],
   "include": [
     "**/*.ts",
     "**/*.mjs",
