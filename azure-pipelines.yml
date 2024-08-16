@@ -10,8 +10,8 @@ variables:
   ARTIFACT_DIRECTORY: lib
   # BUILT_LIB_LOCATION: dist/godeltech/project-analyzer-cli/lib @TODO: remove
   COVERAGE_LOCATION: coverage
-  LIB_LOCATION: projects/godeltech/project-analyzer-cli
-  LIB_SRC_LOCATION: projects/godeltech/project-analyzer-cli/src
+  # PROJECT_LOCATION: projects/godeltech/project-analyzer-cli
+  # LIB_SRC_LOCATION: projects/godeltech/project-analyzer-cli/src @TODO: remove
   PACKAGE_NAME: '@godeltech/project-analyzer-cli'
   # SHORT_PACKAGE_NAME: 'project-analyzer-cli' @TODO: remove
 
@@ -125,7 +125,7 @@ stages:
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Pipeline Artifact in $(ARTIFACT_DIRECTORY) directory'
           inputs:
-            targetPath: '$(Pipeline.Workspace)/$(ARTIFACT_DIRECTORY)'
+            targetPath: '$(ARTIFACT_DIRECTORY)'
             artifact: '$(ARTIFACT_DIRECTORY)'
 
         - task: PublishCodeCoverageResults@2
@@ -159,7 +159,7 @@ stages:
                   command: 'publish'
                   workingDir: '$(Pipeline.Workspace)/$(ARTIFACT_DIRECTORY)'
                   publishRegistry: 'useFeed'
-                  publishFeed: '19b42d8e-fc7a-4ddc-bbb6-f4a97000f284'
+                  publishFeed: '19324bbd-9baf-4407-b86d-3e7f0d145399/19b42d8e-fc7a-4ddc-bbb6-f4a97000f284'
 
 - stage: Npm
   displayName: 'Npm'
