@@ -1,6 +1,6 @@
 {
   "name": "@godeltech/project-analyzer-cli",
-  "version": "0.0.1",
+  "version": "0.0.8",
   "main": "lib/index.cjs",
   "type": "module",
   "license": "MIT",
