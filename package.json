@@ -1,7 +1,7 @@
 {
   "name": "@godeltech/project-analyzer-cli",
   "version": "0.0.1",
-  "main": "package/index.cjs",
+  "main": "lib/index.cjs",
   "type": "module",
   "license": "MIT",
   "dependencies": {
@@ -9,6 +9,7 @@
     "inquirer": "^8.2.0",
     "parse-gitignore": "^1.0.1"
   },
+  "bin": "lib/index.cjs",
   "devDependencies": {
     "@eslint/js": "^9.8.0",
     "@types/eslint__js": "^8.42.3",
@@ -35,7 +36,7 @@
     "micromatch": ">=4.0.8"
   },
   "scripts": {
-    "build": "webpack --mode=production && cp package.json lib",
+    "build": "webpack --mode=production",
     "lint": "eslint src",
     "test": "jest --config=./jest.config.cjs --coverage",
     "test:ci": "jest --ci --reporters=jest-junit --reporters=default --coverage --coverageReporters=cobertura --coverageReporters=html",

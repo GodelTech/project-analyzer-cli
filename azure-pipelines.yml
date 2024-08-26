@@ -95,7 +95,7 @@ stages:
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Pipeline Artifact in $(ARTIFACT_DIRECTORY) directory'
           inputs:
-            targetPath: '$(ARTIFACT_DIRECTORY)'
+            targetPath: '.'
             artifact: '$(ARTIFACT_DIRECTORY)'
 
         - task: PublishCodeCoverageResults@2
