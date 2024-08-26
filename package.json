@@ -10,7 +10,7 @@
     "parse-gitignore": "^1.0.1"
   },
   "bin": {
-    "project-analyzer-cli": "package/index.cjs"
+    "@godeltech/project-analyzer-cli": "package/index.cjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
