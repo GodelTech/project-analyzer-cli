@@ -128,8 +128,9 @@ import generateFileName from './generateFileName';
     const data = new TextEncoder().encode(report);
 
     const fileName = generateFileName(projectName);
+    const reportName = path.resolve(process.cwd(), `./reports/${fileName}`);
 
-    fs.writeFileSync(__dirname + `/../reports/${fileName}`, data);
+    fs.writeFileSync(reportName, data);
 
     process.exit(0);
   } else {
