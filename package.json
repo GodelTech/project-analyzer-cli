@@ -9,7 +9,6 @@
     "inquirer": "^8.2.0",
     "parse-gitignore": "^1.0.1"
   },
-  "bin": "package/index.cjs",
   "devDependencies": {
     "@eslint/js": "^9.8.0",
     "@types/eslint__js": "^8.42.3",
