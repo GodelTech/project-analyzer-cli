@@ -10,6 +10,8 @@ variables:
   ARTIFACT_DIRECTORY: lib
   COVERAGE_LOCATION: coverage
   PACKAGE_NAME: '@godeltech/project-analyzer-cli'
+  FEED_ID: 19b42d8e-fc7a-4ddc-bbb6-f4a97000f284 # project-analyzer-cli
+  PROJECT_ID: 19324bbd-9baf-4407-b86d-3e7f0d145399 # OpenSource
 
 pool:
   vmImage: ubuntu-latest
@@ -53,15 +55,13 @@ stages:
         - task: Bash@3
           displayName: Set NPM package patch number
           env:
-            COMPANY_NAME: 'godeltech'
-            FEED_NAME: 'project-analyzer-cli'
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            GET_PACKAGE_ID_URL: 'https://feeds.dev.azure.com/godeltech/OpenSource/_apis/packaging/feeds/$(FEED_ID)/packages?protocolType=Npm&packageNameQuery=$(PACKAGE_NAME)'
           inputs:
             targetType: 'inline'
             script: |
               # Get package name and version from package.json file
               PACKAGE_VERSION=$(jq -r ".version" package.json)
-              GET_PACKAGE_ID_URL="https://feeds.dev.azure.com/${COMPANY_NAME}/_apis/packaging/Feeds/${FEED_NAME}/packages?protocolType=Npm&packageNameQuery=$PACKAGE_NAME"
               # Get all available versions for our package
               ALL_VERSIONS_URL=$(curl -s -X GET -u PATUSER:$SYSTEM_ACCESSTOKEN $GET_PACKAGE_ID_URL | jq -r '.value[0]._links.versions.href')
               ALL_VERSIONS=$(curl -s -X GET -u PATUSER:$SYSTEM_ACCESSTOKEN $ALL_VERSIONS_URL | jq -r '.value[].version')
@@ -129,7 +129,7 @@ stages:
                   command: 'publish'
                   workingDir: '$(Pipeline.Workspace)/$(ARTIFACT_DIRECTORY)'
                   publishRegistry: 'useFeed'
-                  publishFeed: '19324bbd-9baf-4407-b86d-3e7f0d145399/19b42d8e-fc7a-4ddc-bbb6-f4a97000f284'
+                  publishFeed: '$(PROJECT_ID)/$(FEED_ID)'
 
 - stage: Npm
   displayName: 'Npm'
