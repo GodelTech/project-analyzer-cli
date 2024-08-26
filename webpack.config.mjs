@@ -2,6 +2,7 @@
 
 import path from 'path';
 import { fileURLToPath } from 'url';
+import nodeExternals from 'webpack-node-externals';
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -11,6 +12,7 @@ export default {
   entry: {
     index: './src/index.ts',
   },
+  externals: [nodeExternals()],
   output: {
     filename: 'index.cjs',
     path: path.resolve(__dirname, 'lib'),

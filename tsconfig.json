@@ -12,7 +12,8 @@
     "target": "ES5",
     "noImplicitAny": true,
     "removeComments": true,
-    "preserveConstEnums": true
+    "preserveConstEnums": true,
+    "skipLibCheck": true
   },
   "exclude": ["node_modules", "lib"],
   "include": [

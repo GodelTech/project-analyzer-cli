@@ -4,9 +4,9 @@ A tool for gathering information from package.json files of projects.
 
 ## Build
 
-[![Azure DevOps builds (main)](https://img.shields.io/azure-devops/build/GodelTech/OpenSource/53?style=flat-square)](https://dev.azure.com/GodelTech/OpenSource/_build/latest?definitionId=132&branchName=main)
-[![Azure DevOps tests (main)](https://img.shields.io/azure-devops/tests/GodelTech/OpenSource/53?style=flat-square)](https://dev.azure.com/GodelTech/OpenSource/_build/latest?definitionId=132&branchName=main)
-[![Azure DevOps coverage (main)](https://img.shields.io/azure-devops/coverage/GodelTech/OpenSource/53?style=flat-square)](https://dev.azure.com/GodelTech/OpenSource/_build/latest?definitionId=132&branchName=main)
+[![Azure DevOps builds (main)](https://img.shields.io/azure-devops/build/GodelTech/OpenSource/132?style=flat-square)](https://dev.azure.com/GodelTech/OpenSource/_build/latest?definitionId=132&branchName=main)
+[![Azure DevOps tests (main)](https://img.shields.io/azure-devops/tests/GodelTech/OpenSource/132?style=flat-square)](https://dev.azure.com/GodelTech/OpenSource/_build/latest?definitionId=132&branchName=main)
+[![Azure DevOps coverage (main)](https://img.shields.io/azure-devops/coverage/GodelTech/OpenSource/132?style=flat-square)](https://dev.azure.com/GodelTech/OpenSource/_build/latest?definitionId=132&branchName=main)
 
 ## Npm
 
@@ -22,10 +22,13 @@ A tool for gathering information from package.json files of projects.
 
 - In the project directory, open the console
 
-- Run `npx project-analyzer-cli@latest`
+- Run `npx @godeltech/project-analyzer-cli@latest`
+
+- Follow filling in required information
+
+- Refort will be generated under `/reports` folder
 
 ## Related links
-- [Ticket](https://trello.com/c/hjYwMOrq/232-create-poc-approach-of-packagejsons-analysis)
 - [Filehound](https://github.com/nspragg/filehound)
 - [Inquirer](https://github.com/SBoudrias/Inquirer.js)
 - [Parse Gitignore](https://github.com/jonschlinkert/parse-gitignore)
