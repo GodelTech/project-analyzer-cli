@@ -9,9 +9,7 @@
     "inquirer": "^8.2.0",
     "parse-gitignore": "^1.0.1"
   },
-  "bin": {
-    "@godeltech/project-analyzer-cli": "package/index.cjs"
-  },
+  "bin": "package/index.cjs",
   "devDependencies": {
     "@eslint/js": "^9.8.0",
     "@types/eslint__js": "^8.42.3",
