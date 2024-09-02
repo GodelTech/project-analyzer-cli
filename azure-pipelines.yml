@@ -69,6 +69,7 @@ stages:
 
         - task: Bash@3
           displayName: Set NPM package patch number
+          condition: ne(variables['Build.Reason'], 'Schedule')
           env:
             SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             GET_PACKAGE_ID_URL: 'https://feeds.dev.azure.com/godeltech/OpenSource/_apis/packaging/feeds/$(FEED_ID)/packages?protocolType=Npm&packageNameQuery=$(PACKAGE_NAME)'
@@ -109,6 +110,7 @@ stages:
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Pipeline Artifact in $(ARTIFACT_DIRECTORY) directory'
+          condition: ne(variables['Build.Reason'], 'Schedule')
           inputs:
             targetPath: '.'
             artifact: '$(ARTIFACT_DIRECTORY)'
@@ -130,7 +132,7 @@ stages:
 - stage: Artifacts
   displayName: 'Artifacts'
   dependsOn: Build
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'))
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'Schedule'))
   jobs:
     - deployment: Publish
       displayName: 'Publish lib in artifacts'
@@ -150,7 +152,7 @@ stages:
 - stage: Npm
   displayName: 'Npm'
   dependsOn: Artifacts
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'Manual'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'Schedule'))
   jobs:
     - deployment: Publish
       displayName: 'Publish lib in npm registry'
