@@ -4,7 +4,22 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 trigger:
-- main
+  batch: true
+  branches:
+    include:
+    - '*'
+
+pr:
+  branches:
+    include:
+    - '*'
+
+schedules:
+- cron: '0 0 1 * *'
+  displayName: Monthly midnight build
+  branches:
+    include:
+    - main
 
 variables:
   ARTIFACT_DIRECTORY: lib
@@ -115,6 +130,7 @@ stages:
 - stage: Artifacts
   displayName: 'Artifacts'
   dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'))
   jobs:
     - deployment: Publish
       displayName: 'Publish lib in artifacts'
@@ -134,7 +150,7 @@ stages:
 - stage: Npm
   displayName: 'Npm'
   dependsOn: Artifacts
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'Manual'))
   jobs:
     - deployment: Publish
       displayName: 'Publish lib in npm registry'
