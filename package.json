@@ -35,6 +35,10 @@
   "overrides": {
     "micromatch": ">=4.0.8"
   },
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "webpack --mode=production",
     "lint": "eslint src",
