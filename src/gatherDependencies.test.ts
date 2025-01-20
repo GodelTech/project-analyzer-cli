@@ -1,4 +1,4 @@
-import gatherDepandencies from './gatherDepandencies';
+import gatherDepandencies from './gatherDependencies';
 
 describe('gatherDependencies', () => {
   let globalConsoleLog: (...args: string[]) => void;
@@ -6,10 +6,12 @@ describe('gatherDependencies', () => {
   beforeAll(() => {
     globalConsoleLog = console.log;
     console.log = jest.fn();
+    jest.spyOn(Date.prototype, 'toLocaleDateString').mockReturnValue('1/1/25');
   });
 
   afterAll(() => {
     console.log = globalConsoleLog;
+    jest.restoreAllMocks();
   });
 
   it('should return dependencies from read file', () => {
@@ -17,14 +19,66 @@ describe('gatherDependencies', () => {
       `${__dirname}/../mocks/package.json`,
     ]);
 
-    expect(result).toEqual({
-      name: 'test',
-      dependencies: {
-        react: ['18.6.0'],
-        jest: ['29.7.0'],
-        'jest-cli': ['29.7.0'],
-      },
-    });
+    const expected: AnalyserReport = {
+      projectName: 'test',
+      reportDate: '1/1/25',
+      dependencies: [
+        {
+          name: 'react',
+          versions: ['18.6.0'],
+          minVersion: '18.6.0',
+          maxVersion: '18.6.0',
+        },
+        {
+          name: 'jest',
+          versions: ['29.7.0'],
+          minVersion: '29.7.0',
+          maxVersion: '29.7.0',
+        },
+        {
+          name: 'jest-cli',
+          versions: ['29.7.0'],
+          minVersion: '29.7.0',
+          maxVersion: '29.7.0',
+        },
+      ],
+    };
+
+    expect(result).toEqual(expected);
+  });
+
+  it('should return additional dependencies from another file', () => {
+    const result = gatherDepandencies('test', [
+      `${__dirname}/../mocks/package.json`,
+      `${__dirname}/../mocks/package-additional.json`,
+    ]);
+
+    const expected: AnalyserReport = {
+      projectName: 'test',
+      reportDate: '1/1/25',
+      dependencies: [
+        {
+          name: 'react',
+          versions: ['18.6.0', '^19.0.0'],
+          minVersion: '18.6.0',
+          maxVersion: '^19.6.0',
+        },
+        {
+          name: 'jest',
+          versions: ['29.7.0'],
+          minVersion: '29.7.0',
+          maxVersion: '29.7.0',
+        },
+        {
+          name: 'jest-cli',
+          versions: ['29.7.0'],
+          minVersion: '29.7.0',
+          maxVersion: '29.7.0',
+        },
+      ],
+    };
+
+    expect(result).toEqual(expected);
   });
 
   it('should return dependencies from read file with only dependencies', () => {
@@ -33,10 +87,16 @@ describe('gatherDependencies', () => {
     ]);
 
     expect(result).toEqual({
-      name: 'test',
-      dependencies: {
-        react: ['18.6.0'],
-      },
+      projectName: 'test',
+      reportDate: '1/1/25',
+      dependencies: [
+        {
+          name: 'react',
+          versions: ['18.6.0'],
+          minVersion: '18.6.0',
+          maxVersion: '18.6.0',
+        },
+      ],
     });
   });
 
@@ -46,11 +106,22 @@ describe('gatherDependencies', () => {
     ]);
 
     expect(result).toEqual({
-      name: 'test',
-      dependencies: {
-        jest: ['29.7.0'],
-        'jest-cli': ['29.7.0'],
-      },
+      projectName: 'test',
+      reportDate: '1/1/25',
+      dependencies: [
+        {
+          name: 'jest',
+          versions: ['^29.7.0'],
+          minVersion: '^29.7.0',
+          maxVersion: '^29.7.0',
+        },
+        {
+          name: 'jest-cli',
+          versions: ['29.7.0'],
+          minVersion: '29.7.0',
+          maxVersion: '29.7.0',
+        },
+      ],
     });
   });
 });
