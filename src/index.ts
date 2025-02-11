@@ -6,7 +6,7 @@ import * as fileHound from 'filehound';
 import * as parseGitIgnore from 'parse-gitignore';
 
 import excludeGivenDeps from './excludeDependencies';
-import gatherDepandencies from './gatherDepandencies';
+import gatherDependencies from './gatherDependencies';
 import generateFileName from './generateFileName';
 
 (async () => {
@@ -96,7 +96,7 @@ import generateFileName from './generateFileName';
     ])
   ).selectedPackages;
 
-  const result = gatherDepandencies(projectName, selectedPackages);
+  const result = gatherDependencies(projectName, selectedPackages);
 
   const chosenToBeExcluded = (
     await inquirer.prompt([
@@ -105,7 +105,7 @@ import generateFileName from './generateFileName';
         name: 'selected',
         message:
           'Select dependencies being excluded from the report (select nothing to include them all):',
-        choices: Object.keys(result.dependencies),
+        choices: result.dependencies.map((dependency) => dependency.name),
       },
     ])
   ).selected;

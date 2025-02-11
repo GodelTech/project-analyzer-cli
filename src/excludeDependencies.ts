@@ -4,16 +4,9 @@ const excludeDependencies = (
 ): AnalyserReport => {
   return {
     ...report,
-    dependencies: Object.keys(report.dependencies).reduce(
-      (acc: Record<string, string[]>, depName: string) => {
-        if (!depsListToExclude.includes(depName)) {
-          acc[depName] = report.dependencies[depName];
-        }
-
-        return acc;
-      },
-      {},
-    ),
+    dependencies: report.dependencies.filter((dependency) => {
+      return !depsListToExclude.includes(dependency.name);
+    }),
   };
 };
 

@@ -1,4 +1,12 @@
-declare type AnalyserReport = {
+declare type Dependency = {
   name: string;
-  dependencies: Record<string, string[]>;
+  minVersion?: string;
+  maxVersion?: string;
+  versions: string[];
+};
+
+declare type AnalyserReport = {
+  projectName: string;
+  reportDate: string;
+  dependencies: Dependency[];
 };

@@ -18,6 +18,10 @@ A tool for gathering information from package.json files of projects.
 
   > Make sure you have Node in your environment path. Run `node -v` to check
 
+  Required node: `>=20`
+
+  Required npm: `>=10.5.0`
+
 ## How to use
 
 - In the project directory, open the console
@@ -32,3 +36,12 @@ A tool for gathering information from package.json files of projects.
 - [Filehound](https://github.com/nspragg/filehound)
 - [Inquirer](https://github.com/SBoudrias/Inquirer.js)
 - [Parse Gitignore](https://github.com/jonschlinkert/parse-gitignore)
+- [semver](https://github.com/npm/node-semver)
+
+## Report compatibility
+
+  V1 reports are aligned with converting script in `/scripts`, to run it agains a report from v0 need to run
+
+  ```
+  npm run transform:v1
+  ```

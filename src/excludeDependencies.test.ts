@@ -1,20 +1,31 @@
 import excludeDependencies from './excludeDependencies';
 
-const mockReport = {
-  name: 'test',
-  dependencies: {
-    axios: ['1.0.0', '1.1.0'],
-    react: ['18.6.0'],
-  },
+const mockReport: AnalyserReport = {
+  projectName: 'test',
+  reportDate: '1/20/2025',
+  dependencies: [
+    {
+      name: 'axios',
+      versions: ['1.0.0', '1.1.0'],
+    },
+    {
+      name: 'react',
+      versions: ['18.6.0'],
+    },
+  ],
 };
 
 describe('excludeDependencies', () => {
   it('should exclude dependencies when exclude list is not empty', () => {
     expect(excludeDependencies(mockReport, ['axios'])).toEqual({
-      name: 'test',
-      dependencies: {
-        react: ['18.6.0'],
-      },
+      projectName: 'test',
+      reportDate: '1/20/2025',
+      dependencies: [
+        {
+          name: 'react',
+          versions: ['18.6.0'],
+        },
+      ],
     });
   });
 
