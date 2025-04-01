@@ -61,7 +61,7 @@ describe('gatherDependencies', () => {
           name: 'react',
           versions: ['18.6.0', '^19.0.0'],
           minVersion: '18.6.0',
-          maxVersion: '^19.6.0',
+          maxVersion: '19.0.0',
         },
         {
           name: 'jest',
@@ -112,8 +112,8 @@ describe('gatherDependencies', () => {
         {
           name: 'jest',
           versions: ['^29.7.0'],
-          minVersion: '^29.7.0',
-          maxVersion: '^29.7.0',
+          minVersion: '29.7.0',
+          maxVersion: '29.7.0',
         },
         {
           name: 'jest-cli',
