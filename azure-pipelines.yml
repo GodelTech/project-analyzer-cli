@@ -9,10 +9,7 @@ trigger:
     include:
     - '*'
 
-pr:
-  branches:
-    include:
-    - '*'
+pr: none
 
 schedules:
 - cron: '0 0 1 * *'
@@ -43,7 +40,7 @@ stages:
       steps:
         - task: NodeTool@0
           inputs:
-            versionSpec: '18.x'
+            versionSpec: '20.x'
           displayName: 'Install Node.js'
         - script:
             npm ci
@@ -85,20 +82,29 @@ stages:
 
               # If finds existing version, will increase patch version
               if [[ " ${all[@]} " =~ " ${PACKAGE_VERSION} " ]]; then
-                echo Current package version found in existing packages. Iterating the patch number...
-                # Get latest version currently published in the feed for our package
-                LATEST_VERSION=$(curl -s -X GET -u PATUSER:$SYSTEM_ACCESSTOKEN $GET_PACKAGE_ID_URL| jq -r '.value[].versions[].version')
-                IFS=. read MAJOR MINOR PATCH <<< "$LATEST_VERSION"
-                PATCH_UPDATED=$((PATCH + 1))
-                NEW_VERSION=$MAJOR.$MINOR.$PATCH_UPDATED
-                NEW_BUILD_NUMBER=$MAJOR.$MINOR.$PATCH_UPDATED
-                echo New package version: $NEW_VERSION
+                echo Iterate patch version...
+                OLD_VERSION=$PACKAGE_VERSION
+
+
+                while [[ " ${all[@]} " =~ " ${PACKAGE_VERSION} " ]]; do
+                  echo Current package version found in existing packages. Iterating the patch number...
+                  IFS=. read MAJOR MINOR PATCH <<< "$PACKAGE_VERSION"
+
+                  PATCH_UPDATED=$((PATCH + 1))
+                  PACKAGE_VERSION=$MAJOR.$MINOR.$PATCH_UPDATED
+                  echo New package version: $PACKAGE_VERSION
+                done
+
                 # Update patch number variable
+                echo Updating patch number variable to $PATCH_UPDATED
                 echo "##vso[task.setvariable variable=patch;]$PATCH_UPDATED"
                 # Update build number of the current build
-                echo "##vso[build.updatebuildnumber]$NEW_BUILD_NUMBER"
-                echo Replacing \"version\": \"$PACKAGE_VERSION\" with \"version\": \"$NEW_VERSION\" in local package.json
-                sed -i 's/"version": "'${PACKAGE_VERSION}'"/"version": "'${NEW_VERSION}'"/' package.json
+                echo Updating build number to $PACKAGE_VERSION
+                echo "##vso[build.updatebuildnumber]$PACKAGE_VERSION"
+
+                echo Replacing \"version\": \"$OLD_VERSION\" with \"version\": \"$PACKAGE_VERSION\" in local package.json
+                jq --arg VERSION "$PACKAGE_VERSION" '.version=$VERSION' package.json > package.json.tmp
+                mv package.json.tmp package.json
                 echo New package.json version: $(jq -r ".version" package.json)
               fi
 
